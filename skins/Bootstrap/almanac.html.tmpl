@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+#if $varExists('htmllang')
+  <html lang="$BootstrapLabels.htmllang">
+#else
+  <html lang="en">
+#end if
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -37,6 +41,7 @@
             <li class="active"><a href="#">$BootstrapLabels.headings.front_page</a></li>
             <li><a href="stats.html">$BootstrapLabels.headings.stats</a></li>
             <li><a href="history.html">$BootstrapLabels.headings.history</a></li>
+            <li class="active"><a href="#">$BootstrapLabels.headings.almanac</a></li>
             <li><a href="news.html">$BootstrapLabels.headings.news</a></li>
             <li><a href="about.html">$BootstrapLabels.headings.about</a></li>
           </ul>
@@ -61,15 +66,6 @@
 
           <!-- Graph panel -->
           <div class="col-md-8 main">
-              <ul class="nav nav-pills">
-                <li><a href="index.html">$BootstrapLabels.timespans.day</a></li>
-                <li><a href="week.html">$BootstrapLabels.timespans.week</a></li>
-                <li><a href="month.html">$BootstrapLabels.timespans.month</a></li>
-                <li><a href="year.html">$BootstrapLabels.timespans.year</a></li>
-                <li class="active"><a href="#">$BootstrapLabels.timespans.almanac</a></li>
-              </ul>
-              <br />
-
             <div class="row col-xs-12" align="center">
               <table class="table table-bordered">
                 <tbody>
@@ -82,6 +78,18 @@
                   #else
                   #set $sun_None="<i>(Always up)</i>"
                   #end if
+                  #set $now = $current.dateTime.raw
+            	  #set $yesterday = $now - 24*3600
+            	  #set $today_daylight = $almanac.sun.set.raw -  $almanac.sun.rise.raw
+                  #set $yesterday_daylight = $almanac($almanac_time=$yesterday).sun.set.raw - $almanac($almanac_time=$yesterday).sun.rise.raw
+                  #set $difference = $today_daylight - $yesterday_daylight
+            	  #set $seconds = $almanac.sun.set.raw - $almanac.sun.rise.raw
+            	  #set $hours = $seconds //3600
+                  #set $seconds %= 3600
+                  #set $minutes = $seconds//60
+                  #set $seconds %= 60
+                  #set $diffminutes = abs($difference) // 60
+                  #set $diffsec =  abs($difference)  % 60
                   <tr>
                   <td>
                     <div class="row col-xs-12" align="center">
@@ -145,6 +153,20 @@
                         <td>$almanac.next_equinox</td>
                       </tr>
                       #end if
+                     <tr>
+            <td>$BootstrapLabels.almanac.DayLightTime </td><td> $("%d" % $hours) $BootstrapLabels.almanac.hours 
+                   $("%d" % $minutes) $BootstrapLabels.almanac.minutes $("%d" % $seconds) $BootstrapLabels.almanac.seconds</td>
+            </tr>
+            <tr>
+            <td>$BootstrapLabels.almanac.TheDayis </td><td> $("%d" % $diffminutes ) $BootstrapLabels.almanac.minutes           
+                 $("%d" % $diffsec )   $BootstrapLabels.almanac.seconds            
+            #if $difference > 0
+            $BootstrapLabels.almanac.LongerDay
+            #else
+            $BootstrapLabels.almanac.ShorterDay
+            #end if
+            </td>
+            </tr>
                 </tbody>
                     </table>
                     </div>
@@ -237,9 +259,9 @@
                 </tr>
                   </tbody>
               </table>
-            </div>
          </div>
 
+        </div>
         </div>
       </div>
 
