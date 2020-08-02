@@ -227,7 +227,7 @@ class MyXSearch(SearchList):
             readingBinder = getattr(table_stats, obs_type) 
             
             # Some aggregate come with an argument
-            if aggregate_type in ['max_ge', 'max_le', 'min_le', 'min_ge', 'sum_ge']:
+            if aggregate_type in ['max_ge', 'max_le', 'min_le', 'min_ge', 'sum_ge', 'avg_gt', 'avg_ge', 'avg_le', 'avg_lt']:
 
                 try:
                     threshold_value = float(table_options['aggregate_threshold'][0])
@@ -238,13 +238,22 @@ class MyXSearch(SearchList):
 
                 threshold_units = table_options['aggregate_threshold'][1]
 
-                try:
-                    reading = getattr(readingBinder, aggregate_type)((threshold_value, threshold_units))
-                except IndexError:
-                    syslog.syslog(syslog.LOG_INFO, "%s: Problem with aggregate_threshold units: %s" % (os.path.basename(__file__),
-                                                                                                       str(threshold_units)))
-                    return "Could not generate table %s" % table_name
+                # the avg_xx has a third argument
+                if aggregate_type in ['avg_gt', 'avg_ge', 'avg_le', 'avg_lt']:
+                  
+                  try:
+                    reading = getattr(readingBinder, aggregate_type)((threshold_value, threshold_units,'group_temperature'))
+                  except IndexError:
+                     syslog.syslog(syslog.LOG_INFO, "%s: Problem with aggregate_threshold units: %s %s" % (os.path.basename(__file__),str(threshold_units),str(aggregate_type)))
+                     return "Could not generate table %s" % table_name
+                else:     
+                  try:
+                     reading = getattr(readingBinder, aggregate_type)((threshold_value, threshold_units))
+                  except IndexError:
+                     syslog.syslog(syslog.LOG_INFO, "%s: Problem with aggregate_threshold units: %s" % (os.path.basename(__file__),str(threshold_units)))
+                     return "Could not generate table %s" % table_name
             else:
+
                 try:
                     reading = getattr(readingBinder, aggregate_type)
                 except KeyError:
@@ -320,9 +329,15 @@ class MyXSearch(SearchList):
                     obsMonth = getattr(month, obs_type)
                     obsMonth.data_binding = binding;
                     if unit_type == 'count':
-                        try:
+                       if aggregate_type in ['avg_gt', 'avg_ge', 'avg_le', 'avg_lt']:
+                         try:
+                            value = getattr(obsMonth, aggregate_type)((threshold_value, threshold_units,'group_temperature')).value_t
+                         except:
+                            value = [0, 'count']
+                       else:    
+                         try:
                             value = getattr(obsMonth, aggregate_type)((threshold_value, threshold_units)).value_t
-                        except:
+                         except:
                             value = [0, 'count']
                     else:      
                         value = converter.convert(getattr(obsMonth, aggregate_type).value_t)
@@ -334,10 +349,16 @@ class MyXSearch(SearchList):
                 obsYear.data_binding = binding;
 
                 if unit_type == 'count':
-                    try:
-                        value = getattr(obsYear, aggregate_type)((threshold_value, threshold_units)).value_t
-                    except:
-                        value = [0, 'count']
+                    if aggregate_type in ['avg_gt', 'avg_ge', 'avg_le', 'avg_lt']:
+                       try:
+                          value = getattr(obsYear, aggregate_type)((threshold_value, threshold_units,'group_temperature')).value_t
+                       except:
+                          value = [0, 'count']
+                    else:    
+                       try:
+                          value = getattr(obsYear, aggregate_type)((threshold_value, threshold_units)).value_t
+                       except:
+                         value = [0, 'count']
                 else:
                     value = converter.convert(getattr(obsYear, aggregate_type).value_t)
 
